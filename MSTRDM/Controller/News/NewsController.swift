@@ -19,7 +19,7 @@ class NewsController: BaseListController, UICollectionViewDelegateFlowLayout {
     var isDonePaginating = false
     var pages = 1 // Отслеживаем, в какую страницу переходить при достяжении конца scroll - 1
     let pageSize = 5 // Константное значение, указывающее кол-во новостей на одну загрузку
-    let dateFrom = "02-22"
+    let dateFrom = "04-28"
     let search = "ios"
     let apiKey = "d56b91fb3687480abfa422ae4a750257"
     
@@ -186,7 +186,7 @@ class NewsController: BaseListController, UICollectionViewDelegateFlowLayout {
         return cell
     }
     
-    
+    // Переход при касании
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let destination = DetailNewsController()
         navigationController?.pushViewController(destination, animated: true)
@@ -245,7 +245,7 @@ class NewsController: BaseListController, UICollectionViewDelegateFlowLayout {
         
     }
     
-    
+    // Размер ячейки
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         return .init(width: view.frame.width, height: 400)
     }

@@ -26,6 +26,7 @@
 		AD5DBD8525EAA48000D4E832 /* ArticlesData+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD5DBD8425EAA48000D4E832 /* ArticlesData+CoreDataClass.swift */; };
 		AD5DBD8625EAA48000D4E832 /* ArticlesData+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD5DBD8325EAA48000D4E832 /* ArticlesData+CoreDataProperties.swift */; };
 		AD62501F25E403640076EA2A /* Reachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD62501E25E403640076EA2A /* Reachability.swift */; };
+		AD960FF02604C68A002F4C57 /* welcome.sqlite in Resources */ = {isa = PBXBuildFile; fileRef = AD960FEF2604C68A002F4C57 /* welcome.sqlite */; };
 		ADD874BF259F991300AF1AC8 /* NewsData.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADD874BE259F991300AF1AC8 /* NewsData.swift */; };
 		ADD874CA25A0943F00AF1AC8 /* NewsLoadingCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADD874C925A0943F00AF1AC8 /* NewsLoadingCell.swift */; };
 		ADD874CF25A0D2E800AF1AC8 /* Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADD874CE25A0D2E800AF1AC8 /* Service.swift */; };
@@ -55,6 +56,7 @@
 		AD5DBD8325EAA48000D4E832 /* ArticlesData+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "ArticlesData+CoreDataProperties.swift"; path = "/Users/zakirovtahir/Desktop/Программирование/Приложения/MSTRDM/MSTRDM/Model/ArticlesData+CoreDataProperties.swift"; sourceTree = "<absolute>"; };
 		AD5DBD8425EAA48000D4E832 /* ArticlesData+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "ArticlesData+CoreDataClass.swift"; path = "/Users/zakirovtahir/Desktop/Программирование/Приложения/MSTRDM/MSTRDM/Model/ArticlesData+CoreDataClass.swift"; sourceTree = "<absolute>"; };
 		AD62501E25E403640076EA2A /* Reachability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reachability.swift; sourceTree = "<group>"; };
+		AD960FEF2604C68A002F4C57 /* welcome.sqlite */ = {isa = PBXFileReference; lastKnownFileType = file; path = welcome.sqlite; sourceTree = "<group>"; };
 		ADD874BE259F991300AF1AC8 /* NewsData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsData.swift; sourceTree = "<group>"; };
 		ADD874C925A0943F00AF1AC8 /* NewsLoadingCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsLoadingCell.swift; sourceTree = "<group>"; };
 		ADD874CE25A0D2E800AF1AC8 /* Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Service.swift; sourceTree = "<group>"; };
@@ -123,6 +125,7 @@
 				AD051E3C2599EFF600685DD6 /* LaunchScreen.storyboard */,
 				AD051E3F2599EFF600685DD6 /* Info.plist */,
 				AD051E372599EFF400685DD6 /* MSTRDM.xcdatamodeld */,
+				AD960FEF2604C68A002F4C57 /* welcome.sqlite */,
 			);
 			path = MSTRDM;
 			sourceTree = "<group>";
@@ -280,6 +283,7 @@
 			files = (
 				AD051E3E2599EFF600685DD6 /* LaunchScreen.storyboard in Resources */,
 				AD051E3B2599EFF600685DD6 /* Assets.xcassets in Resources */,
+				AD960FF02604C68A002F4C57 /* welcome.sqlite in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
