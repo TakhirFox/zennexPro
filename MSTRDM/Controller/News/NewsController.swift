@@ -9,32 +9,63 @@ import UIKit
 import CoreData
 import SDWebImage
 
-class NewsController: BaseListController, UICollectionViewDelegateFlowLayout {
+class NewsController: BaseListController {
     
-    fileprivate let cellId = "cellId"
-    fileprivate let footerId = "footerId"
-    var newsData = [Articles]() // Экземпляр класса Articles
+    // MARK: - Public Properies
+    
+    var newsData = [Articles]()
     var articlesData = [ArticlesData]()
     var isPadinating = false
     var isDonePaginating = false
-    var pages = 1 // Отслеживаем, в какую страницу переходить при достяжении конца scroll - 1
-    let pageSize = 5 // Константное значение, указывающее кол-во новостей на одну загрузку
-    let dateFrom = "04-28"
+    var pages = 1
+    let pageSize = 5
+    let dateFrom = "05-08"
     let search = "ios"
     let apiKey = "d56b91fb3687480abfa422ae4a750257"
     
+    // MARK: - Private Properties
     
-    // этот метод вызывается перед представлением контроллера
+    fileprivate let cellId = "cellId"
+    fileprivate let footerId = "footerId"
+    
+    // MARK: - Lifecycles
+    
+    // Lifecycle for deleting saved data when connected to the internet
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
+        deleteSaveData()
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        UserDefaults.standard.set(false, forKey: "_UIConstraintBasedLayoutLogUnsatisfiable")
         
+        setupCollectionView()
+        networkCheckAndFetchData()
+    }
+    
+    // MARK: - Private Methods
+    
+    private func setupCollectionView() {
+        collectionView.backgroundColor = .systemBackground
+        collectionView.register(NewsCell.self, forCellWithReuseIdentifier: cellId)
+        collectionView.register(NewsLoadingCell.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionFooter, withReuseIdentifier: footerId)
+    }
+    
+    // Checking network and fetch data
+    private func networkCheckAndFetchData() {
+        if Reachability.isConnected(){
+            moreFetchData()
+        }
+    }
+    
+    // Method for deleting saved data if there is network access
+    private func deleteSaveData() {
         let context = getContext()
         let fetchRequest: NSFetchRequest<ArticlesData> = ArticlesData.fetchRequest()
         
-        // Проверяем, подключен ли интернет? Если да, то удаляем сохраненные данные из core data, и сохраняемся. В противном случае, вызываем метод noInterner с сообщением "Отсутствует интернет"
         if Reachability.isConnected(){
-            
             let results = try! context.fetch(fetchRequest)
             for item in results {
                 context.delete(item)
@@ -47,32 +78,87 @@ class NewsController: BaseListController, UICollectionViewDelegateFlowLayout {
             }
             
         } else {
-            noInternet(title: "Отсутствует интернет", message: "Но вы можете насладится сохраненными новостями")
+            alertForCheckInternet(title: "Отсутствует интернет", message: "Но вы можете насладится сохраненными новостями")
         }
+    }
+    
+    // Getting to the viewContext
+    private func getContext() -> NSManagedObjectContext {
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        return appDelegate.persistentContainer.viewContext
+    }
+    
+    // Method of saving data form the network
+    private func saveData(with title: String, descriptions: String, urlToImage: Data, url: String) {
+        let context = getContext()
         
+        // Добираемся до своей сущности ArticlesData
+        guard let entity = NSEntityDescription.entity(forEntityName: "ArticlesData", in: context) else { return }
+        
+        // Получаем объект
+        let articlesObject = ArticlesData(entity: entity, insertInto: context)
+        articlesObject.title = title
+        articlesObject.descriptions = descriptions
+        articlesObject.urlToImage = urlToImage
+        articlesObject.url = url
+        
+        // Пытаемся сохранить данные, и добавить в сущность articlesData
+        do {
+            try context.save()
+            articlesData.append(articlesObject)
+        } catch let error as NSError {
+            print(error.localizedDescription)
+        }
+    }
+    
+    // More fetch data from the network
+    func moreFetchData() {
+        let urlString = "https://newsapi.org/v2/everything?&q=\(search)&from=2021-\(dateFrom)&sortBy=publishedAt&apiKey=\(apiKey)&page=\(pages)&pageSize=\(pageSize)"
+        print("Догрузка:", urlString)
+        
+        NetworkService.shared.fetchJSONData(urlString: urlString) { (resultNews: NewsData?, error) in
+            if error != nil {
+                DispatchQueue.main.async {
+                    self.alertForCheckInternet(title: "Отсутсвует интернет", message: "Можно повторить кстати")
+                }
+                return
+            }
+            
+            // Add 1 in variable page
+            self.pages += 1
+            
+            if resultNews?.articles.count == 0 {
+                self.isDonePaginating = true
+            }
+            
+            self.newsData += resultNews?.articles ?? []
+            
+            DispatchQueue.main.async {
+                self.collectionView.reloadData()
+            }
+            
+            self.isPadinating = false
+        }
+    }
+    
+    // If there is no internet, present alertController with an error
+    func alertForCheckInternet(title: String, message: String) {
+        let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        
+        // Кнопка повторить вызывает метод moreFetchData для дозагрузки данных, если интернет присутствует
+        let retryAction = UIAlertAction(title: "Повторить", style: .default) {_ in
+            self.moreFetchData()
+        }
+        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+        alertController.addAction(retryAction)
+        alertController.addAction(cancelAction)
+        self.present(alertController, animated: true, completion: nil)
         
     }
     
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        UserDefaults.standard.set(false, forKey: "_UIConstraintBasedLayoutLogUnsatisfiable")
-        
-        collectionView.backgroundColor = .systemBackground
-        collectionView.register(NewsCell.self, forCellWithReuseIdentifier: cellId)
-        collectionView.register(NewsLoadingCell.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionFooter, withReuseIdentifier: footerId)
-        
-        // Проверяем подключение интернета, и загружаем предварительные данные из сети
-        if Reachability.isConnected(){
-            moreFetchData()
-        }
-        
-    }
-    
+    // MARK: - Public methods
     
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        
         let context = getContext()
         let fetchRequest: NSFetchRequest<ArticlesData> = ArticlesData.fetchRequest()
         let results = try! context.fetch(fetchRequest)
@@ -83,44 +169,30 @@ class NewsController: BaseListController, UICollectionViewDelegateFlowLayout {
         } else {
             return results.count
         }
-        
-        
     }
-    
     
     // В футер добавляем ячейку с представлением дозагрузки данных.
     // Можно скрыть футер, при отсутсвии интернета, и вывести в хедер ячейку с кнопкой обновления и приверкой доступности сети
     override func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
-        
         let footer = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: footerId, for: indexPath)
-        
         return footer
-        
     }
     
-    // Задаем высоту ячеек
+    // Setup height to cell
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForFooterInSection section: Int) -> CGSize {
-        
         let height: CGFloat = isDonePaginating ? 0 : 100
-        
         return .init(width: view.frame.width, height: height)
     }
-    
     
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: cellId, for: indexPath) as! NewsCell
         
-        
-        // Приваиваем лейблам данные, сохраненные в core data, когда нет соединения с интернетом
-        if Reachability.isConnected(){
-            
-            
+        // Присваиваем лейблам данные, сохраненные в core data, когда нет соединения с интернетом
+        if Reachability.isConnected() {
             let news = newsData[indexPath.item]
-            
+        
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-            
-            
             if let date = dateFormatter.date(from: news.publishedAt!) {
                 dateFormatter.dateFormat = "dd MMMM yyyy"
                 cell.dateLabel.text = dateFormatter.string(from: date)
@@ -129,160 +201,58 @@ class NewsController: BaseListController, UICollectionViewDelegateFlowLayout {
             cell.imageView.sd_setImage(with: URL(string: news.urlToImage ?? ""), completed: nil)
             
             DispatchQueue.global().async {
-                
-                
-                
                 guard let imageUrl = URL(string: news.urlToImage ?? "") else { return }
-                
                 guard let imageData = try? Data(contentsOf: imageUrl) else { return }
                 
-                
-                // Метод сохранения данных из сети в core data
+                // Saving data from the network to CoreData
                 DispatchQueue.main.async {
                     self.saveData(with: news.title ?? "", descriptions: news.description ?? "", urlToImage: imageData, url: news.url ?? "")
                 }
-                
             }
             
             cell.titleLabel.text = news.title
             cell.desctiptionLabel.text = news.description
             
-            
-            
         } else {
-            
             let context = getContext()
             let fetchRequest: NSFetchRequest<ArticlesData> = ArticlesData.fetchRequest()
-            
-            
             do {
                 articlesData = try context.fetch(fetchRequest)
-                
                 cell.titleLabel.text = articlesData[indexPath.item].title
-                
                 cell.desctiptionLabel.text = articlesData[indexPath.item].descriptions
-                
                 cell.imageView.image = UIImage(data: articlesData[indexPath.item].urlToImage!)
-                
             } catch let error as NSError {
                 print(error.localizedDescription)
             }
-            
-            
-            
         }
-        
         
         // если количество indextPath равна количеству загруженных данных минус один, и не равна булевому значению false isPaginating,
         // в таком случае догружаем метод moreFetchData и меняем состояние isPadinating = true
         if indexPath.item == newsData.count - 1 && !isPadinating {
-            
             isPadinating = true
-            
-            // Догружаем данные
             moreFetchData()
         }
-        
         return cell
     }
     
-    // Переход при касании
+    // Tapping on the detail controller
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let destination = DetailNewsController()
         navigationController?.pushViewController(destination, animated: true)
         if Reachability.isConnected(){
-            destination.url = newsData[indexPath.item].url
+            destination.baseURL = newsData[indexPath.item].url
+            destination.titleBar = newsData[indexPath.item].title
         }
     }
-    
-    // Метод догрузки данных из сети
-    func moreFetchData() {
-        
-        let urlString = "https://newsapi.org/v2/everything?&q=\(search)&from=2021-\(dateFrom)&sortBy=publishedAt&apiKey=\(apiKey)&page=\(pages)&pageSize=\(pageSize)"
-        print("Догрузка:", urlString)
-        
-        Service.shared.fetchJSONData(urlString: urlString) { (resultNews: NewsData?, error) in
-            
-            if error != nil {
-                DispatchQueue.main.async {
-                    self.noInternet(title: "Отсутсвует интернет", message: "Можно повторить кстати")
-                }
-                return
-            }
-            
-            // Прибавляем 1 в переменную page, при достяжении конца страницы
-            self.pages += 1
-            
-            if resultNews?.articles.count == 0 {
-                self.isDonePaginating = true
-            }
-            
-            
-            self.newsData += resultNews?.articles ?? []
-            DispatchQueue.main.async {
-                self.collectionView.reloadData()
-            }
-            
-            self.isPadinating = false
-        }
-        
-    }
-    
-    
-    // Если интернет отсутсвует, выводить алерт контроллер с ошибкой
-    func noInternet(title: String, message: String) {
-        
-        let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        // Кнопка повторить вызывает метод moreFetchData для дозагрузки данных, если интернет присутствует
-        let retryAction = UIAlertAction(title: "Повторить", style: .default) {_ in
-            self.moreFetchData()
-        }
-        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-        alertController.addAction(retryAction)
-        alertController.addAction(cancelAction)
-        // Выводим АлертКонтроллер
-        self.present(alertController, animated: true, completion: nil)
-        
-    }
-    
-    // Размер ячейки
+     
+}
+
+// MARK: - extention UICollectionViewDelegateFlowLayout
+
+extension NewsController: UICollectionViewDelegateFlowLayout {
+    // Setup size for cells
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         return .init(width: view.frame.width, height: 400)
     }
-    
-    
-    // метод сохранения данных из сети
-    private func saveData(with title: String, descriptions: String, urlToImage: Data, url: String) {
-        let context = getContext()
-        
-        //добираемся до своей сущности ArticlesData
-        guard let entity = NSEntityDescription.entity(forEntityName: "ArticlesData", in: context) else { return }
-        
-        // получаем объект
-        let articlesObject = ArticlesData(entity: entity, insertInto: context)
-        articlesObject.title = title
-        articlesObject.descriptions = descriptions
-        articlesObject.urlToImage = urlToImage
-        articlesObject.url = url
-        
-        // пытаемся сохранить данные, и добавить в сущность articlesData
-        do {
-            try context.save()
-            articlesData.append(articlesObject)
-        } catch let error as NSError {
-            print(error.localizedDescription)
-        }
-    }
-    
-    
-    
-    // Добираемся до viewContext
-    private func getContext() -> NSManagedObjectContext {
-        let appDelegate = UIApplication.shared.delegate as! AppDelegate
-        return appDelegate.persistentContainer.viewContext
-    }
-    
-    
-    
     
 }

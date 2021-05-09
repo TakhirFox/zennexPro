@@ -9,9 +9,18 @@ import UIKit
 
 class NewsLoadingCell: UICollectionReusableView {
     
+    // MARK: - Initializers
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         
+        setupUI()
+  
+    }
+    
+    // MARK: - Private Methods
+    
+    private func setupUI() {
         let activityIndicatior = UIActivityIndicatorView(style: .medium)
         activityIndicatior.color = .darkGray
         activityIndicatior.startAnimating()
@@ -25,8 +34,6 @@ class NewsLoadingCell: UICollectionReusableView {
         
         addSubview(stackView)
         stackView.centerInSuperview(size: .init(width: 200, height: 0))
-        
-        
     }
     
     required init?(coder: NSCoder) {

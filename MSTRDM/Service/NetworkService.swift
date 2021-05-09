@@ -1,5 +1,5 @@
 //
-//  Service.swift
+//  NetworkService.swift
 //  MSTRDM
 //
 //  Created by Zakirov Tahir on 02.01.2021.
@@ -7,9 +7,9 @@
 
 import Foundation
 
-class Service {
+class NetworkService {
     
-    static let shared = Service()
+    static let shared = NetworkService()
     
     func fetchJSONData<T: Decodable>(urlString: String, completion: @escaping (T?, Error?) -> ()) {
         guard let url = URL(string: urlString) else { return }
